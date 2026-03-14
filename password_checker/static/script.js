@@ -1,57 +1,107 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const passwordInput = document.getElementById('passwordInput');
-    const showHideBtn = document.getElementById('showHideBtn');
-    const eyeIcon = document.getElementById('eyeIcon');
-    const strengthDisplay = document.getElementById('strengthDisplay');
-    const strengthCircle = document.getElementById('strengthCircle');
-    const strengthScore = document.getElementById('strengthScore');
-    const strengthText = document.getElementById('strengthText');
-    const entropyValue = document.getElementById('entropyValue');
-    const checklistSection = document.getElementById('checklistSection');
-    const checklist = document.getElementById('checklist');
-    const suggestionsSection = document.getElementById('suggestionsSection');
-    const suggestions = document.getElementById('suggestions');
-    const generateBtn = document.getElementById('generateBtn');
-    const generatedPassword = document.getElementById('generatedPassword');
-    const copyBtn = document.getElementById('copyBtn');
+const passwordInput = document.getElementById("passwordInput");
+const showHideBtn = document.getElementById("showHideBtn");
+const eyeIcon = document.getElementById("eyeIcon");
 
-    let isPasswordVisible = false;
+const strengthCircle = document.getElementById("strengthCircle");
+const strengthScore = document.getElementById("strengthScore");
+const strengthText = document.getElementById("strengthText");
+const entropyValue = document.getElementById("entropyValue");
+const checklist = document.getElementById("checklist");
+const suggestions = document.getElementById("suggestions");
 
-    // Toggle password visibility
-    showHideBtn.addEventListener('click', function() {
-        isPasswordVisible = !isPasswordVisible;
-        passwordInput.type = isPasswordVisible ? 'text' : 'password';
-        eyeIcon.className = isPasswordVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
-    });
+const generateBtn = document.getElementById("generateBtn");
+const generatedPassword = document.getElementById("generatedPassword");
+const copyBtn = document.getElementById("copyBtn");
 
-    // Real-time password checking
-    passwordInput.addEventListener('input', debounce(checkPassword, 300));
+// Toggle password visibility
+showHideBtn.addEventListener("click", () => {
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+    } else {
+        passwordInput.type = "password";
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
+    }
+});
 
-    // Generate strong password
-    generateBtn.addEventListener('click', generateStrongPassword);
+// Check password on input
+passwordInput.addEventListener("input", () => {
+    const password = passwordInput.value.trim();
+    if (!password) return resetDisplay();
 
-    // Copy password
-    copyBtn.addEventListener('click', copyToClipboard);
+    fetch("/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+    })
+        .then(res => res.json())
+        .then(data => updateDisplay(data))
+        .catch(err => console.error(err));
+});
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+// Generate strong password
+generateBtn.addEventListener("click", () => {
+    fetch("/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: "" })
+    })
+        .then(res => res.json())
+        .then(data => {
+            passwordInput.value = data.strong_password;
+            generatedPassword.textContent = data.strong_password;
+            copyBtn.style.display = "inline-block";
+            updateDisplay(data);
+        })
+        .catch(err => console.error(err));
+});
+
+// Copy password
+copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(passwordInput.value);
+    alert("Password copied to clipboard!");
+});
+
+// Update UI
+function updateDisplay(data) {
+    if (data.error) {
+        strengthScore.textContent = 0;
+        strengthText.textContent = "Enter a password";
+        entropyValue.textContent = 0;
+        checklist.innerHTML = "";
+        suggestions.innerHTML = "";
+        return;
     }
 
-    async function checkPassword() {
-        const password = passwordInput.value;
-        
-        if (password.length === 0) {
-            hideResults();
-            return;
-        }
+    // Strength
+    strengthScore.textContent = data.score;
+    strengthText.textContent = data.strength;
+    entropyValue.textContent = data.entropy;
 
-        try {
-            const response = await fetch('/check
+    // Checklist
+    checklist.innerHTML = "";
+    for (const [key, passed] of Object.entries(data.checks)) {
+        const div = document.createElement("div");
+        div.textContent = `${key}: ${passed ? "✔" : "❌"}`;
+        checklist.appendChild(div);
+    }
+
+    // Suggestions
+    suggestions.innerHTML = "";
+    data.suggestions.forEach(s => {
+        const div = document.createElement("div");
+        div.textContent = `💡 ${s}`;
+        suggestions.appendChild(div);
+    });
+}
+
+// Reset UI
+function resetDisplay() {
+    strengthScore.textContent = 0;
+    strengthText.textContent = "Enter a password";
+    entropyValue.textContent = 0;
+    checklist.innerHTML = "";
+    suggestions.innerHTML = "";
+}
