@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PassGuard | Password Strength Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch(e){document.documentElement.dataset.theme='light'}</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg> PassGuard</div>
+  <button id="themeBtn" class="btn ghost" type="button">Switch theme</button>
+</header>
+
+<main class="layout">
+  <section class="panel">
+    <h1>Check how strong your password really is</h1>
+    <p class="sub">Analysis runs as you type. Passwords are checked in memory and never stored or logged.</p>
+
+    <div class="field">
+      <input type="password" id="pw" placeholder="Type or paste a password" maxlength="128" autocomplete="off" spellcheck="false" aria-label="Password">
+      <button id="toggle" class="btn ghost sm" type="button">Show</button>
+    </div>
+    <div class="meter"><div id="bar"></div></div>
+
+    <div class="summary">
+      <div class="gauge">
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle id="arc" class="arc" cx="60" cy="60" r="52"/></svg>
+        <div class="gv"><b id="score">0</b><small>out of 100</small></div>
+      </div>
+      <div class="stats">
+        <div><small>Strength</small><b id="label">Waiting for input</b></div>
+        <div><small>Estimated entropy</small><b><span id="entropy">0</span> bits</b></div>
+      </div>
+    </div>
+
+    <h2>Estimated time to crack</h2>
+    <div class="crack" id="crack"></div>
+
+    <h2>Security checklist</h2>
+    <ul id="checks" class="checks"></ul>
+
+    <div id="sugWrap" hidden>
+      <h2>How to improve it</h2>
+      <ul id="sugs" class="sugs"></ul>
+    </div>
+
+    <details>
+      <summary>Personal info and password history (optional)</summary>
+      <p class="note">We warn you if the password contains these details or is too close to your old password. Nothing is saved.</p>
+      <div class="two">
+        <input id="pName" placeholder="First name" autocomplete="off" maxlength="60">
+        <input id="pYear" placeholder="Birth year" autocomplete="off" maxlength="10">
+        <input id="pEmail" placeholder="Email username" autocomplete="off" maxlength="60">
+        <input id="pPrev" type="password" placeholder="Previous password" autocomplete="off" maxlength="128">
+      </div>
+    </details>
+
+    <button id="pdfBtn" class="btn primary" type="button" disabled>Download PDF report</button>
+  </section>
+
+  <aside class="panel gen">
+    <h2 class="first">Password generator</h2>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-mode="random" type="button">Random</button>
+      <button class="tab" data-mode="phrase" type="button">Passphrase</button>
+    </div>
+
+    <div id="optRandom">
+      <label class="range">Length <output id="lenOut">16</output><input type="range" id="len" min="8" max="64" value="16"></label>
+      <label class="chk"><input type="checkbox" id="upper" checked> Uppercase letters</label>
+      <label class="chk"><input type="checkbox" id="lower" checked> Lowercase letters</label>
+      <label class="chk"><input type="checkbox" id="digits" checked> Numbers</label>
+      <label class="chk"><input type="checkbox" id="symbols" checked> Symbols</label>
+      <label class="chk"><input type="checkbox" id="noamb"> Avoid look-alike characters (O, 0, l, 1)</label>
+    </div>
+
+    <div id="optPhrase" hidden>
+      <label class="range">Words <output id="wOut">5</output><input type="range" id="words" min="3" max="8" value="5"></label>
+      <label class="chk"><input type="checkbox" id="pnum" checked> Add a number at the end</label>
+      <label class="sel">Separator
+        <select id="sep"><option value="-">Hyphen (-)</option><option value=".">Dot (.)</option><option value="_">Underscore (_)</option></select>
+      </label>
+    </div>
+
+    <button id="genBtn" class="btn primary" type="button">Generate password</button>
+    <div class="out" id="out">Your password appears here</div>
+    <button id="copyBtn" class="btn ghost" type="button" disabled>Copy to clipboard</button>
+  </aside>
+</main>
+<div id="toast" role="status"></div>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
